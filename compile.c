@@ -74,7 +74,7 @@ int main() {
 	parser_info * curr_parse;
 	printf("#");
 	int err_occurred = init_parser();
-	printf("error:%d\n",err_occurred);
+//	printf("error:%d\n",err_occurred);
 
 	for (curr_parse = next_fun(); curr_parse != NULL; curr_parse = next_fun()) {
 		// create 3 address code for function call
@@ -99,7 +99,7 @@ void getMethodBody(parser_info * curr_parse) {
 
 	tnode * t = curr_parse->syntax_tree;
 	if (stree_Get_TreeNodeType(t) == FunDef) {
-		printf("Function:%s()\n",sym_Get_Name(stree_Get_FunDef_SymTabEntry(t)));
+	//	printf("Function:%s()\n",sym_Get_Name(stree_Get_FunDef_SymTabEntry(t)));
 
 		tnode * method_body = stree_Get_FunDef_Body(t);
 		// method_body is pointer to top node in method syntax tree
@@ -110,9 +110,9 @@ void getMethodBody(parser_info * curr_parse) {
 		getArgList(stree_Get_FunDef_SymTabEntry(t));
 
 		traverseFunctionBody(method_body,Enter);
-		printf("Leave Function:%s()\n",sym_Get_Name(stree_Get_FunDef_SymTabEntry(t)));
+	//	printf("Leave Function:%s()\n",sym_Get_Name(stree_Get_FunDef_SymTabEntry(t)));
 		appendToInstructionList(newInstrLeave(Leave,stree_Get_FunDef_SymTabEntry(t)));
-		print_threeInstruction(head);
+		//print_threeInstruction(head);
 	}
 } // getMethodBody
 
@@ -124,12 +124,12 @@ void getArgList(symtabnode * t) {
 		if (sym_Get_IsFormal(list->stnode)) {
 			switch (sym_Get_Type(list->stnode)) {
 				case t_Int:
-					printf("Formal Arg(int):%s @ %d\n",sym_Get_Name(list->stnode),space);
+				//	printf("Formal Arg(int):%s @ %d\n",sym_Get_Name(list->stnode),space);
 					appendToInstructionList(newInstr_Arg(Arg,list->stnode,space));
 					space = space+4;
 					break;
 				case t_Char:
-					printf("Formal Arg(int):%s @ %d\n",sym_Get_Name(list->stnode),space);
+					//printf("Formal Arg(int):%s @ %d\n",sym_Get_Name(list->stnode),space);
 					appendToInstructionList(newInstr_Arg(Arg,list->stnode,space));
 					space = space+4;
 					break;
@@ -206,7 +206,7 @@ void traverseFunctionBody(tnode * t,enum threeAddrType type) {
 			// find/set arguments through recursion
 			funCallArguments(stree_Get_FunCall_Args(t));
 			// set 3addr code for function call
-			printf("Fun:%s\n",sym_Get_Name(stree_Get_FunCall_Fun(t)));
+			//printf("Fun:%s\n",sym_Get_Name(stree_Get_FunCall_Fun(t)));
 			appendToInstructionList(newInstrCall(Call,stree_Get_FunCall_Fun(t)));
 			return;
 		/* Statements */
@@ -245,23 +245,23 @@ void tac_assignments(tnode * t) {
 symtabnode * tac_assignments_rhs(tnode * t) {
 	symtabnode * symtabptr = NULL;
 	addrCode * newCode;
-	printf("...RHS...\n");
+//	printf("...RHS...\n");
 	switch (stree_Get_TreeNodeType(t)) {
 		case Charcon:
-			printf("Assg RHS Charcon: %c\n",stree_Get_Charcon(t));
+	//		printf("Assg RHS Charcon: %c\n",stree_Get_Charcon(t));
 			symtabptr = SymTab_Insert(global_local_symbtbl,temp_create_str(),1); // 1 for local scope
 			newCode = newInstr_Assg_Char(Assignment,symtabptr,stree_Get_Charcon(t));
 			appendToInstructionList(newCode);
 
 			break;
 		case Intcon:
-			printf("Assg RHS Intcon: %d\n",stree_Get_Intcon(t));
+	//		printf("Assg RHS Intcon: %d\n",stree_Get_Intcon(t));
 			symtabptr = SymTab_Insert(global_local_symbtbl,temp_create_str(),1); // 1 for local scope
 			newCode = newInstr_Assg_Num(Assignment,symtabptr,stree_Get_Intcon(t));
 			appendToInstructionList(newCode);
 			break;
 		case Stringcon:
-			printf("Assg RHS Stringcon: %s\n",stree_Get_Stringcon(t));
+	//		printf("Assg RHS Stringcon: %s\n",stree_Get_Stringcon(t));
 			symtabptr = SymTab_Insert(global_local_symbtbl,temp_create_str(),1); // 1 for local scope
 			newCode = newInstr_Assg_String(Assignment,symtabptr,stree_Get_Stringcon(t));
 			appendToInstructionList(newCode);
@@ -276,10 +276,10 @@ symtabnode * tac_assignments_rhs(tnode * t) {
 } // tac_assignments_rhs
 void tac_assignments_lhs(tnode * t,symtabnode * smbtbl) {
 	addrCode * newCode;
-	printf("...LHS...\n");
+	//printf("...LHS...\n");
 	switch(stree_Get_TreeNodeType(t)) {
 		case Var:
-			printf("newAssg:%s = %s\n",sym_Get_Name(stree_Get_Var(t)),sym_Get_Name(smbtbl));
+	//		printf("newAssg:%s = %s\n",sym_Get_Name(stree_Get_Var(t)),sym_Get_Name(smbtbl));
 			newCode = newInstr_Assg_Simple(Assignment,smbtbl,stree_Get_Var(t));
 			appendToInstructionList(newCode);
 			break;
@@ -303,19 +303,19 @@ void funCallArguments(tnode * t) {
 			// add node to list that will be traversed to create argument 
 			// assembly code out of it.
 			case Intcon:
-				printf("param Intcon:%d\n",stree_Get_Intcon(tmp)); 
+		//		printf("param Intcon:%d\n",stree_Get_Intcon(tmp)); 
 				appendToInstructionList(newInstr_Param_Num(Param,stree_Get_Intcon(tmp)));
 				break;
 			case Stringcon:
-				printf("param Stringcon:%s\n",stree_Get_Stringcon(tmp));
+		//		printf("param Stringcon:%s\n",stree_Get_Stringcon(tmp));
 				appendToInstructionList(newInstr_Param_String(Param,stree_Get_Stringcon(tmp)));
 				break;
 			case Charcon:
-				printf("param Charcon:%c\n",stree_Get_Charcon(tmp));
+		//		printf("param Charcon:%c\n",stree_Get_Charcon(tmp));
 				appendToInstructionList(newInstr_Param_Char(Param,stree_Get_Charcon(tmp)));
 				break;
 			case Var:
-				printf("param Var:%s\n",sym_Get_Name(stree_Get_Var(tmp)));
+			//	printf("param Var:%s\n",sym_Get_Name(stree_Get_Var(tmp)));
 				// create new instr var param
 				// get symtabnode for var
 				appendToInstructionList(newInstr_Param_Var(Param,stree_Get_Var(tmp)));
@@ -334,13 +334,13 @@ void appendToInstructionList(addrCode * newInstr) {
 	if (curr == NULL) {
 		curr = newInstr;
 		*(ref) = curr;
-		printf("created new instr head\n");
+	//	printf("created new instr head\n");
 	} else {
 		while (curr->next != NULL) {
 			curr = curr->next;
 		}
 		curr->next = newInstr;
-		printf("appended new instr\n");
+	//	printf("appended new instr\n");
 	}
 } // appendToInstructionList
 
@@ -362,14 +362,14 @@ void addrCode_methodEnter(tnode * t) {
 	newCode->type = stree_Get_TreeNodeType(t);
 	newCode->dest = stree_Get_FunDef_SymTabEntry(t);
 	stree_Set_AuxInfo(t,newCode);
-	printf("Set: (%s)'s aux info - FunDef\n",sym_Get_Name(stree_Get_FunDef_SymTabEntry(t)));
+	//printf("Set: (%s)'s aux info - FunDef\n",sym_Get_Name(stree_Get_FunDef_SymTabEntry(t)));
 } // addrCode_methodEnter
 
 
 char * temp_create_str() {
 	char * ptr = (char*)malloc(sizeof(char)*25);
 	snprintf(ptr,sizeof(&ptr),"tmp%d_",tmp_counter++);
-	printf("newTemp:%s\n",ptr);
+//	printf("newTemp:%s\n",ptr);
 	return ptr;
 } // temp_create_str
 
@@ -546,7 +546,7 @@ void print_assembly(addrCode * code) {
 int strLabelCount = 0;
 char * currFun;
 symtabnodelist ** local_symtbl;
-printf("\n----------------------- assembly -----------------------\n");
+//printf("\n----------------------- assembly -----------------------\n");
 printf(".text\n");
 while (code != NULL) {
 		switch(code->type) {
