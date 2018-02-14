@@ -128,6 +128,11 @@ void getArgList(symtabnode * t) {
 					appendToInstructionList(newInstr_Arg(Arg,list->stnode,space));
 					space = space+4;
 					break;
+				case t_Char:
+					printf("Formal Arg(int):%s @ %d\n",sym_Get_Name(list->stnode),space);
+					appendToInstructionList(newInstr_Arg(Arg,list->stnode,space));
+					space = space+4;
+					break;
 				default:
 					break;
 			}
@@ -574,9 +579,13 @@ while (code != NULL) {
 					printf("\tla $sp, -4($sp)\n");
 					printf("\tsw $t0, 0($sp)\n");
 				} else if (code->flag == 2) {
-					printf("\tlb $t0, %c\n",code->ch);
-					printf("\tla $sp, -1($sp)\n");
-					printf("\tsb $t0, 0($sp)\n");
+					if (code->ch == '\n')  {
+						printf("\tli $t0, 0x0A\n");
+					} else {
+						printf("\tli $t0, '%c'\n",code->ch);						
+					}
+					printf("\tla $sp, -4($sp)\n");
+					printf("\tsw $t0, 0($sp)\n");
 				} else if (code->flag == 3) {
 					char * labelPtr = create_str_label(strLabelCount++);
 					printf("\tla $t0, _%s\n",labelPtr);
@@ -596,9 +605,13 @@ while (code != NULL) {
 						printf("\tla $sp, -4($sp)\n");
 						printf("\tsw $t0, 0($sp)\n");						
 					} else if (code->symType == t_Char) { 
-						printf("\tlw $t0, -4($fp)\n");
+						if (sym_Get_Scope(code->src1) == 1) 
+							printf("\tlb $t0, _%s_%s\n",currFun,sym_Get_Name(code->src1)); // test 23
+						else 
+							printf("\tlb $t0, _%s\n",sym_Get_Name(code->src1)); // test 23
+
 						printf("\tla $sp, -4($sp)\n");
-						printf("\tsb $t0, 0($sp)\n");	
+						printf("\tsw $t0, 0($sp)\n");	
 					} else {
 						printf("\tla $t0, -4($fp)\n");
 						printf("\tla $sp, -4($sp)\n");
@@ -610,23 +623,56 @@ while (code != NULL) {
 				if (code->flag == 1) {
 					printf("\tli $t0, %d\n",code->num);
 					printf("\tsw $t0, -4($fp)\n");
+					printf("\tsw $t0, _%s_%s\n",currFun,sym_Get_Name(code->src1));
+
 				} else if (code->flag == 2) {
-					printf("\tli $t0, '%c'\n",code->ch);
+					if (code->ch == '\n') {
+						printf("\tli $t0, 0x0A\n");
+					} else {
+						printf("\tli $t0, '%c'\n",code->ch);
+					}
 					printf("\tsw $t0, -4($fp)\n");
+					printf("\tsw $t0, _%s_%s\n",currFun,sym_Get_Name(code->src1));
+
 				} else if (code->flag == 3) {
 					// dont have to worry about? for micro C
 				} else if (code->flag == 4) {
 					// var
 					if (sym_Get_Type(code->src1) == t_Int && sym_Get_Type(code->dest) == t_Char) {
-						printf("\tlw $t1, _%s\n",sym_Get_Name(code->src1));
-						printf("\tsb $t1 _%s\n",sym_Get_Name(code->dest));
+						if (sym_Get_Scope(code->src1) == 1)
+							printf("\tlw $t1, _%s_%s\n",currFun,sym_Get_Name(code->src1));
+						else 
+							printf("\tlw $t1, _%s\n",sym_Get_Name(code->src1));
+
+						if (sym_Get_Scope(code->dest) == 1)
+							printf("\tsb $t1 _%s_%s\n",currFun,sym_Get_Name(code->dest));
+						else
+							printf("\tsb $t1 _%s\n",sym_Get_Name(code->dest));
+
 					} else if (sym_Get_Type(code->src1) == t_Char && sym_Get_Type(code->dest) == t_Int) {
-						printf("\tlb $t1, -4($fp)\n");
-        				printf("\tsw $t1, _%s\n",sym_Get_Name(code->dest));
-        				printf("\tsw $t1, -4($fp)\n");
-					} else {
+						if (sym_Get_Scope(code->src1) == 1)
+							printf("\tlb $t1, _%s_%s\n",currFun,sym_Get_Name(code->src1));
+						else
+							printf("\tlb $t1, _%s\n",sym_Get_Name(code->src1));
+
+						if (sym_Get_Scope(code->dest) == 1)
+	        				printf("\tsw $t1, _%s_%s\n",currFun,sym_Get_Name(code->dest));
+	        			else
+	        				printf("\tsw $t1, _%s\n",sym_Get_Name(code->dest));
+					} else if (sym_Get_Type(code->src1) == t_Char) {
 						printf("\tlw $t1, -4($fp)\n");
-						printf("\tsw $t1, _%s\n",sym_Get_Name(code->dest));
+						printf("\tsb $t1, _%s\n",sym_Get_Name(code->dest));
+					} else {
+						if (sym_Get_Scope(code->src1) == 1) {
+							printf("\tlw $t1, _%s_%s\n",currFun,sym_Get_Name(code->src1));
+						} else {
+							printf("\tlw $t1, _%s\n",sym_Get_Name(code->src1));
+						}
+						if (sym_Get_Scope(code->dest) == 1) {
+							printf("\tsw $t1, _%s_%s\n",currFun,sym_Get_Name(code->dest));
+						} else {
+							printf("\tsw $t1, _%s\n",sym_Get_Name(code->dest));
+						}
 					}
 				}
 				break;
@@ -637,6 +683,13 @@ while (code != NULL) {
 						printf("\tsw $t0, _%s_%s\n",currFun,sym_Get_Name(code->src1));
 					else
 						printf("\tsw $t0, _%s\n",sym_Get_Name(code->src1));
+				}
+				if (sym_Get_Type(code->src1) == t_Char) {
+					printf("\tlw $t0, %d($fp)\n",code->argSpace);
+					if (sym_Get_Scope(code->src1) == 1)
+						printf("\tsb $t0, _%s_%s\n",currFun,sym_Get_Name(code->src1));
+					else
+						printf("\tsb $t0, _%s\n",sym_Get_Name(code->src1));
 				}
 				break;
 			default:
